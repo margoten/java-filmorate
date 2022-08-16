@@ -2,56 +2,70 @@ package com.yandex.practicum.filmorate.controller;
 
 import com.yandex.practicum.filmorate.exeption.ValidationException;
 import com.yandex.practicum.filmorate.model.Film;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FilmControllerTest {
     private static FilmController filmController;
+    private Film film;
 
     @BeforeAll
     public static void createController() {
         filmController = new FilmController();
     }
 
+    @BeforeEach
+    public void createFilm() {
+        film = new Film(0, "name", "descr", "2000-10-10", 10);
+    }
+
     @Test
     void shouldExceptionWithNull() {
-        assertThrows(ValidationException.class, () -> filmController.create(null));
+        ValidationException ex = assertThrows(ValidationException.class, () -> filmController.create(null));
+        Assertions.assertEquals("Фильм не может быть создан.", ex.getMessage());
     }
 
     @Test
     void shouldExceptionWithEmptyName() {
-        Film film = new Film(0, "", "descr", "2000-10-10", 10);
-        assertThrows(ValidationException.class, () -> filmController.create(film));
+        film.setName("");
+        ValidationException ex = assertThrows(ValidationException.class, () -> filmController.create(film));
+        Assertions.assertEquals("Название фильма пустое.", ex.getMessage());
+
     }
 
     @Test
     void shouldExceptionWithTooLongDescription() {
-        Film film = new Film(0, "film", "Lorem ipsum dolor sit amet, consectetur adipiscing elit," +
-                " sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam," +
-                " quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.", "2000-10-10", 100);
-        assertThrows(ValidationException.class, () -> filmController.create(film));
+        film.setDescription("d".repeat(201));
+        ValidationException ex = assertThrows(ValidationException.class, () -> filmController.create(film));
+        Assertions.assertEquals("Описание фильма слишком длинная. Максимальная длина - 200 символов.", ex.getMessage());
+
     }
 
     @Test
     void shouldExceptionWithNegativeDuration() {
-        Film film = new Film(0, "film", "descr",
-                "2000-10-10", -100);
-        assertThrows(ValidationException.class, () -> filmController.create(film));
+       film.setDuration(-100);
+        ValidationException ex = assertThrows(ValidationException.class, () -> filmController.create(film));
+        Assertions.assertEquals("Некорректная продолжительность фильма -100.", ex.getMessage());
+
     }
 
     @Test
     void shouldExceptionWithIncorrectReleaseDay() {
-        Film film = new Film(0, "film", "descr",
-                "1600-10-10", 100);
-        assertThrows(ValidationException.class, () -> filmController.create(film));
+        film.setReleaseDate("1600-10-10");
+        ValidationException ex = assertThrows(ValidationException.class, () -> filmController.create(film));
+        Assertions.assertEquals("Некорректная дата выхода фильма", ex.getMessage());
+
     }
 
     @Test
     void shouldExceptionUpdateWithNonContainsId() {
-        Film film = new Film(4, "film", "updated descr",
-                "2000-10-10", 100);
-        assertThrows(ValidationException.class, () -> filmController.update(film));
+        film.setId(4);
+        ValidationException ex = assertThrows(ValidationException.class, () -> filmController.update(film));
+        Assertions.assertEquals("Фильм не существует.", ex.getMessage());
+
     }
 }

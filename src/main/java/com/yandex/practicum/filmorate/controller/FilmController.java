@@ -8,9 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.Month;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
@@ -18,13 +16,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public class FilmController {
     private final Map<Integer, Film> films = new HashMap<>();
-    private static final AtomicInteger idGenerator = new AtomicInteger(0);
+    private int idGenerator = 0;
     private static final LocalDate CINEMA_BIRTHDAY = LocalDate.of(1895, Month.DECEMBER, 28);
+    private static final int MAX_FILM_DESCRIPTION_SIZE = 200;
 
 
     @GetMapping()
-    public Collection<Film> getAll() {
-        return films.values();
+    public List<Film> getAll() {
+        log.debug("Текущее количество фильмов: {}", films.size());
+        return new ArrayList<>(films.values());
     }
 
     @PostMapping()
@@ -35,11 +35,8 @@ public class FilmController {
             throw new ValidationException("Фильм не может быть создан.");
         }
 
-        if (!validFilm(film)) {
-            throw new ValidationException("Фильм не может быть создан.");
-        }
-
-        film.setId(idGenerator.incrementAndGet());
+        validationFilm(film);
+        film.setId(generatedId());
         films.put(film.getId(), film);
         return film;
     }
@@ -56,34 +53,35 @@ public class FilmController {
             log.warn("Фильм с id {} не существует.", film.getId());
             throw new ValidationException("Фильм не существует.");
         }
-        if (!validFilm(film)) {
-            throw new ValidationException("Фильм не может быть обновлен.");
-        }
+        validationFilm(film);
         films.put(film.getId(), film);
         return film;
     }
 
-    public boolean validFilm(Film film) {
+    private void validationFilm(Film film) {
         if (film.getName().isBlank()) {
             log.warn("Название фильма пустое.");
-            return false;
+            throw new ValidationException("Название фильма пустое.");
         }
 
-        if (film.getDescription().length() >= 200) {
+        if (film.getDescription().length() >= MAX_FILM_DESCRIPTION_SIZE) {
             log.warn("Описание фильма слишком длинная. Максимальная длина - 200 символов.");
-            return false;
+            throw new ValidationException("Описание фильма слишком длинная. Максимальная длина - 200 символов.");
         }
 
 
         if (LocalDate.parse(film.getReleaseDate(), Util.DATE_FORMAT).isBefore(CINEMA_BIRTHDAY)) {
             log.warn("Релиз фильма раньше {}.", CINEMA_BIRTHDAY.format(Util.DATE_FORMAT));
-            return false;
+            throw new ValidationException("Некорректная дата выхода фильма");
         }
 
         if (film.getDuration() <= 0) {
             log.warn("Некорректная продолжительность фильма {}.", film.getDuration());
-            return false;
+            throw new ValidationException("Некорректная продолжительность фильма " + film.getDuration() + ".");
         }
-        return true;
+    }
+
+    private int generatedId() {
+        return ++idGenerator;
     }
 }
