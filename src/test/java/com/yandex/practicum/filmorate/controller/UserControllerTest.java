@@ -1,14 +1,18 @@
 package com.yandex.practicum.filmorate.controller;
 
+import com.yandex.practicum.filmorate.exeption.NotFoundException;
 import com.yandex.practicum.filmorate.exeption.ValidationException;
 import com.yandex.practicum.filmorate.model.User;
+import com.yandex.practicum.filmorate.service.UserService;
+import com.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.util.HashSet;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class UserControllerTest {
     private static UserController userController;
@@ -16,12 +20,16 @@ class UserControllerTest {
 
     @BeforeAll
     public static void createController() {
-        userController = new UserController();
+        userController = new UserController(new UserService(new InMemoryUserStorage()));
     }
 
     @BeforeEach
-    public void createFilm() {
-        user = new User(0, "sasadas@dfsdfd.com", "login", "name", "2000-10-10");
+    public void createUser() {
+        user = new User(0, "sasadas@dfsdfd.com", "login", "name", "2000-10-10", null);
+    }
+
+    public User createFriend() {
+        return new User(0, "friend@dfsdfd.com", "loginFriend", "nameFriend", "2001-10-10", null);
     }
 
     @Test
@@ -68,7 +76,7 @@ class UserControllerTest {
     @Test
     void shouldExceptionUpdateWithNonContainsId() {
         user.setId(2);
-        ValidationException ex = assertThrows(ValidationException.class, () -> userController.update(user));
+        NotFoundException ex = assertThrows(NotFoundException.class, () -> userController.update(user));
         Assertions.assertEquals("Пользователь не существует.", ex.getMessage());
     }
 
@@ -78,4 +86,39 @@ class UserControllerTest {
         userController.create(user);
         assertEquals(user.getName(), user.getLogin());
     }
+
+    @Test
+    void shouldCorrectUserReturn() {
+        userController.create(user);
+        User returned = userController.getUser(1);
+        assertNotNull(returned);
+
+    }
+
+    @Test
+    void shouldExceptionWithNotFoundUser() {
+        NotFoundException ex = assertThrows(NotFoundException.class, () -> userController.getUser(1));
+        Assertions.assertEquals("Пользователя с id = " + 1 + " не существует.", ex.getMessage());
+    }
+
+    @Test
+    void shouldCorrectUserAddFriend() {
+        userController.create(user);
+        User friend = createFriend();
+        userController.create(friend);
+        userController.addToFriends(1, 2);
+
+        assertEquals(friend.getFriends().size(), 1);
+        assertTrue(friend.getFriends().contains(1));
+        assertTrue(user.getFriends().contains(2));
+
+    }
+
+    @Test
+    void shouldExceptionAddToFriendNotFoundUser() {
+        userController.create(user);
+        NotFoundException ex = assertThrows(NotFoundException.class, () -> userController.addToFriends(1, -6));
+        Assertions.assertEquals("Пользователя с id = " + 3 + " не существует.", ex.getMessage());
+    }
+
 }

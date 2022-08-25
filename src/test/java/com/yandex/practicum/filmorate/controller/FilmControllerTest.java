@@ -2,10 +2,15 @@ package com.yandex.practicum.filmorate.controller;
 
 import com.yandex.practicum.filmorate.exeption.ValidationException;
 import com.yandex.practicum.filmorate.model.Film;
+import com.yandex.practicum.filmorate.service.FilmService;
+import com.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
+import com.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.HashSet;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -15,12 +20,12 @@ class FilmControllerTest {
 
     @BeforeAll
     public static void createController() {
-        filmController = new FilmController();
+        filmController = new FilmController(new FilmService(new InMemoryFilmStorage(), new InMemoryUserStorage()));
     }
 
     @BeforeEach
     public void createFilm() {
-        film = new Film(0, "name", "descr", "2000-10-10", 10);
+        film = new Film(0, "name", "descr", "2000-10-10", 10, new HashSet<>());
     }
 
     @Test
