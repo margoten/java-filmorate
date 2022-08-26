@@ -41,36 +41,21 @@ public class UserService {
     }
 
     public void addToFriends(int targetUserId, int friendId) {
-        User targetUser = userStorage.get(targetUserId);
-        if (targetUser == null) {
-            throw new NotFoundException("Пользователя с id = " + targetUserId + " не существует.");
-        }
-        User friend = userStorage.get(friendId);
-        if (friend == null) {
-            throw new NotFoundException("Пользователя с id = " + targetUserId + " не существует.");
-        }
+        User targetUser = getUser(targetUserId);
+        User friend = getUser(friendId);
         targetUser.getFriends().add(friendId);
         friend.getFriends().add(targetUserId);
     }
 
     public void removeFromFriends(int targetUserId, int friendId) {
-        User targetUser = userStorage.get(targetUserId);
-        if (targetUser == null) {
-            throw new NotFoundException("Пользователя с id = " + targetUserId + " не существует.");
-        }
-        User friend = userStorage.get(friendId);
-        if (friend == null) {
-            throw new NotFoundException("Пользователя с id = " + targetUserId + " не существует.");
-        }
+        User targetUser = getUser(targetUserId);
+        User friend = getUser(friendId);
         targetUser.getFriends().remove(friendId);
         friend.getFriends().remove(targetUserId);
     }
 
     public List<User> getFriends(int userId) {
-        User user = userStorage.get(userId);
-        if (user == null) {
-            throw new NotFoundException("Пользователя с id = " + userId + " не существует.");
-        }
+        User user = getUser(userId);
         return user.getFriends().stream()
                 .map(userStorage::get)
                 .filter(Objects::nonNull)
@@ -78,14 +63,8 @@ public class UserService {
     }
 
     public List<User> getCommonFriends(int targetUserId, int otherUserId) {
-        User targetUser = userStorage.get(targetUserId);
-        if (targetUser == null) {
-            throw new NotFoundException("Пользователя с id = " + targetUser + " не существует.");
-        }
-        User otherUser = userStorage.get(otherUserId);
-        if (otherUser == null) {
-            throw new NotFoundException("Пользователя с id = " + otherUserId + " не существует.");
-        }
+        User targetUser = getUser(targetUserId);
+        User otherUser = getUser(otherUserId);
         return targetUser.getFriends().stream().filter(id -> otherUser.getFriends().contains(id))
                 .map(userStorage::get)
                 .filter(Objects::nonNull)

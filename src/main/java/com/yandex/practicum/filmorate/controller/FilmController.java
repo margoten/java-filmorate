@@ -1,7 +1,6 @@
 package com.yandex.practicum.filmorate.controller;
 
 import com.yandex.practicum.filmorate.model.Film;
-import com.yandex.practicum.filmorate.model.User;
 import com.yandex.practicum.filmorate.service.FilmService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,13 +26,11 @@ public class FilmController {
 
     @PostMapping()
     public Film create(@RequestBody Film film) {
-        log.debug("Создание фильма : {}.", film);
         return filmService.createFilm(film);
     }
 
     @PutMapping()
     public Film update(@RequestBody Film film) {
-        log.debug("Обновление фильма : {}.", film);
         return filmService.updateFilm(film);
     }
 

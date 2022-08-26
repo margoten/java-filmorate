@@ -22,12 +22,9 @@ public class Film {
     private Set<Integer> likes;
 
     public Set<Integer> getLikes() {
-        if(likes == null) {
+        if (likes == null) {
             likes = new HashSet<>();
         }
         return likes;
     }
-
-
-
 }

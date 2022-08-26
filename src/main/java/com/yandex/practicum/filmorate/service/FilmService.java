@@ -3,9 +3,9 @@ package com.yandex.practicum.filmorate.service;
 import com.yandex.practicum.filmorate.exeption.NotFoundException;
 import com.yandex.practicum.filmorate.model.Film;
 import com.yandex.practicum.filmorate.model.User;
+import com.yandex.practicum.filmorate.model.comparator.FilmsComparator;
 import com.yandex.practicum.filmorate.storage.FilmStorage;
 import com.yandex.practicum.filmorate.storage.UserStorage;
-import com.yandex.practicum.filmorate.model.comparator.FilmsComparator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -43,10 +43,7 @@ public class FilmService {
     }
 
     public Film likeFilm(int userId, int filmId) {
-        Film film = filmStorage.get(filmId);
-        if (film == null) {
-            throw new NotFoundException("Фильм с id = " + filmId + " не существует.");
-        }
+        Film film = getFilm(filmId);
         User user = userStorage.get(userId);
         if (user == null) {
             throw new NotFoundException("Пользователя с id = " + userId + " не существует.");
@@ -56,10 +53,7 @@ public class FilmService {
     }
 
     public Film unlikeFilm(int userId, int filmId) {
-        Film film = filmStorage.get(filmId);
-        if (film == null) {
-            throw new NotFoundException("Фильм с id = " + filmId + " не существует.");
-        }
+        Film film = getFilm(filmId);
         User user = userStorage.get(userId);
         if (user == null) {
             throw new NotFoundException("Пользователя с id = " + userId + " не существует.");
@@ -72,19 +66,14 @@ public class FilmService {
         return filmStorage.getFilms();
     }
 
-    public List<Film> getMostPopularFilms(String countS) {
+    public List<Film> getMostPopularFilms(String countStr) {
         int count = DEFAULT_COUNT_POPULAR_FILMS;
-        if (countS != null) {
-            count = Integer.parseInt(countS);
+        if (countStr != null) {
+            count = Integer.parseInt(countStr);
         }
-        log.warn("11111111111111111111111 count = " + count);
-        log.warn("11111111111111111111111 films = " + filmStorage.getFilms());
-        var sordet =  filmStorage.getFilms().stream()
+        return filmStorage.getFilms().stream()
                 .sorted(new FilmsComparator())
                 .limit(count)
                 .collect(Collectors.toList());
-        log.warn("11111111111111111111111 sorted films = " + sordet);
-        return sordet;
-
     }
 }
