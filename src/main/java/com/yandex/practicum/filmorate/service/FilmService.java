@@ -1,24 +1,31 @@
 package com.yandex.practicum.filmorate.service;
 
 import com.yandex.practicum.filmorate.exeption.NotFoundException;
+import com.yandex.practicum.filmorate.exeption.ValidationException;
 import com.yandex.practicum.filmorate.model.Film;
 import com.yandex.practicum.filmorate.model.User;
 import com.yandex.practicum.filmorate.model.comparator.FilmsComparator;
 import com.yandex.practicum.filmorate.storage.FilmStorage;
 import com.yandex.practicum.filmorate.storage.UserStorage;
+import com.yandex.practicum.filmorate.utils.Util;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class FilmService {
+    private static final LocalDate CINEMA_BIRTHDAY = LocalDate.of(1895, Month.DECEMBER, 28);
+    private static final int MAX_FILM_DESCRIPTION_SIZE = 200;
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
-    private final int DEFAULT_COUNT_POPULAR_FILMS = 10;
+    private static final int DEFAULT_COUNT_POPULAR_FILMS = 10;
+    private int idGenerator = 0;
 
     @Autowired
     public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
@@ -27,10 +34,25 @@ public class FilmService {
     }
 
     public Film createFilm(Film film) {
+        if (film == null) {
+            throw new ValidationException("Фильм не может быть создан.");
+        }
+        validationFilm(film);
+
+        film.setId(generatedId());
         return filmStorage.create(film);
     }
 
     public Film updateFilm(Film film) {
+        if (film == null) {
+            throw new ValidationException("Фильм не может быть обновлен.");
+        }
+
+        if (filmStorage.get(film.getId()) == null) {
+            log.warn("Фильм с id {} не существует.", film.getId());
+            throw new NotFoundException("Фильм не существует.");
+        }
+        validationFilm(film);
         return filmStorage.update(film);
     }
 
@@ -75,5 +97,32 @@ public class FilmService {
                 .sorted(new FilmsComparator())
                 .limit(count)
                 .collect(Collectors.toList());
+    }
+
+    private void validationFilm(Film film) {
+        if (film.getName().isBlank()) {
+            log.warn("Название фильма пустое.");
+            throw new ValidationException("Название фильма пустое.");
+        }
+
+        if (film.getDescription().length() >= MAX_FILM_DESCRIPTION_SIZE) {
+            log.warn("Описание фильма слишком длинная. Максимальная длина - 200 символов.");
+            throw new ValidationException("Описание фильма слишком длинная. Максимальная длина - 200 символов.");
+        }
+
+
+        if (LocalDate.parse(film.getReleaseDate(), Util.DATE_FORMAT).isBefore(CINEMA_BIRTHDAY)) {
+            log.warn("Релиз фильма раньше {}.", CINEMA_BIRTHDAY.format(Util.DATE_FORMAT));
+            throw new ValidationException("Некорректная дата выхода фильма");
+        }
+
+        if (film.getDuration() <= 0) {
+            log.warn("Некорректная продолжительность фильма {}.", film.getDuration());
+            throw new ValidationException("Некорректная продолжительность фильма " + film.getDuration() + ".");
+        }
+    }
+
+    private int generatedId() {
+        return ++idGenerator;
     }
 }

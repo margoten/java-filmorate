@@ -5,6 +5,7 @@ import com.yandex.practicum.filmorate.exeption.ValidationException;
 import com.yandex.practicum.filmorate.model.Film;
 import com.yandex.practicum.filmorate.model.User;
 import com.yandex.practicum.filmorate.service.FilmService;
+import com.yandex.practicum.filmorate.service.UserService;
 import com.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 import com.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 import com.yandex.practicum.filmorate.storage.UserStorage;
@@ -26,15 +27,16 @@ class FilmControllerTest {
     @BeforeAll
     public static void createController() {
         UserStorage userStorage = new InMemoryUserStorage();
-        user = userStorage.create(new User(0, "sasadas@dfsdfd.com", "login", "name",
-                "2000-10-10", null));
+        UserService userService = new UserService(userStorage);
+        user = userService.createUser(new User(0, "sasadas@dfsdfd.com", "login", "name",
+                "2000-10-10"));
         filmController = new FilmController(new FilmService(new InMemoryFilmStorage(), userStorage));
     }
 
     @BeforeEach
     public void createFilm() {
         template = new Film(0, "name", "descr",
-                "2000-10-10", 10, new HashSet<>());
+                "2000-10-10", 10);
     }
 
     @Test

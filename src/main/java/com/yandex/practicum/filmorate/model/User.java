@@ -18,12 +18,5 @@ public class User {
     private String name;
     @NonNull
     private String birthday;
-    private Set<Integer> friends;
-
-    public Set<Integer> getFriends() {
-        if (friends == null) {
-            friends = new HashSet<>();
-        }
-        return friends;
-    }
+    private final Set<Integer> friends = new HashSet<>();
 }

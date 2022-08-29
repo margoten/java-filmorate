@@ -19,12 +19,5 @@ public class Film {
     private String releaseDate;
     @NonNull
     private int duration;
-    private Set<Integer> likes;
-
-    public Set<Integer> getLikes() {
-        if (likes == null) {
-            likes = new HashSet<>();
-        }
-        return likes;
-    }
+    private final Set<Integer> likes = new HashSet<>();
 }

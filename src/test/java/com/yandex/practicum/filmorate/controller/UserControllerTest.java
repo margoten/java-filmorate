@@ -24,12 +24,12 @@ class UserControllerTest {
     @BeforeEach
     public void createUser() {
         template = new User(0, "sasadas@dfsdfd.com", "login", "name",
-                "2000-10-10", null);
+                "2000-10-10");
     }
 
     public User createFriend() {
         return new User(0, "friend@dfsdfd.com", "loginFriend", "nameFriend",
-                "2001-10-10", null);
+                "2001-10-10");
     }
 
     @Test
