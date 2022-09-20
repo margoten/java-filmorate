@@ -4,6 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Data
 @AllArgsConstructor
 public class User {
@@ -15,4 +18,5 @@ public class User {
     private String name;
     @NonNull
     private String birthday;
+    private final Set<Integer> friends = new HashSet<>();
 }
