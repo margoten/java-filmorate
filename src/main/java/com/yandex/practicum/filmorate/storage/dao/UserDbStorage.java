@@ -1,8 +1,11 @@
 package com.yandex.practicum.filmorate.storage.dao;
 
+import com.yandex.practicum.filmorate.model.Film;
 import com.yandex.practicum.filmorate.model.User;
 import com.yandex.practicum.filmorate.storage.UserStorage;
 import com.yandex.practicum.filmorate.utils.Util;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -17,14 +20,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Component("userDbStorage")
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class UserDbStorage implements UserStorage {
 
     private final JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    public UserDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     public List<User> getUsers() {
@@ -35,8 +34,15 @@ public class UserDbStorage implements UserStorage {
     @Override
     public Optional<User> get(int id) {
         String select = "SELECT * FROM users WHERE id = ?";
-        User user =  jdbcTemplate.queryForObject(select, (rs, rowNum) -> makeUser(rs), id);
-        if(user != null) {
+        SqlRowSet filmRow = jdbcTemplate.queryForRowSet(select, id);
+        if(filmRow.next()) {
+            User user = new User(
+                    filmRow.getInt("id"),
+                    filmRow.getString("email"),
+                    filmRow.getString("login"),
+                    filmRow.getString("name"),
+                    filmRow.getDate("birthday").toLocalDate().format(Util.DATE_FORMAT));
+
             return Optional.of(user);
         } else {
             return Optional.empty();
@@ -45,8 +51,10 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User create(User user) {
-        String insert = "INSERT INTO users (id, email, login, name, birthday) VALUES ( ?, ?, ?, ?,?)";
-        jdbcTemplate.update(insert, user.getId(), user.getEmail(), user.getLogin(), user.getName(), user.getBirthday());
+        LocalDate localDate = LocalDate.parse(user.getBirthday(), Util.DATE_FORMAT);
+
+        String insert = "INSERT INTO users (ID, EMAIL, LOGIN, NAME, BIRTHDAY) VALUES ( ?, ?, ?, ?, ?)";
+        jdbcTemplate.update(insert, user.getId(), user.getEmail(), user.getLogin(), user.getName(), Date.valueOf(localDate));
         return user;
     }
 

@@ -3,23 +3,23 @@ package com.yandex.practicum.filmorate.controller;
 import com.yandex.practicum.filmorate.exeption.NotFoundException;
 import com.yandex.practicum.filmorate.exeption.ValidationException;
 import com.yandex.practicum.filmorate.model.User;
-import com.yandex.practicum.filmorate.service.UserService;
-import com.yandex.practicum.filmorate.storage.InMemoryUserStorage;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
+@AutoConfigureTestDatabase
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 class UserControllerTest {
-    private static UserController userController;
+    @Autowired
+    private UserController userController;
     private User template;
-
-    @BeforeAll
-    public static void createController() {
-        userController = new UserController(new UserService(new InMemoryUserStorage()));
-    }
 
     @BeforeEach
     public void createUser() {
