@@ -10,11 +10,13 @@ import com.yandex.practicum.filmorate.storage.UserStorage;
 import com.yandex.practicum.filmorate.utils.Util;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,7 +30,8 @@ public class FilmService {
     private int idGenerator = 0;
 
     @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
+    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
+                       @Qualifier("userDbStorage") UserStorage userStorage) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
     }
@@ -48,7 +51,7 @@ public class FilmService {
             throw new ValidationException("Фильм не может быть обновлен.");
         }
 
-        if (filmStorage.get(film.getId()) == null) {
+        if (filmStorage.get(film.getId()).isEmpty()) {
             log.warn("Фильм с id {} не существует.", film.getId());
             throw new NotFoundException("Фильм не существует.");
         }
@@ -57,30 +60,35 @@ public class FilmService {
     }
 
     public Film getFilm(int id) {
-        Film film = filmStorage.get(id);
-        if (film == null) {
+        Optional<Film> film = filmStorage.get(id);
+        if (film.isEmpty()) {
             throw new NotFoundException("Фильм с id = " + id + " не существует.");
         }
-        return film;
+        return film.get();
     }
 
     public Film likeFilm(int userId, int filmId) {
-        Film film = getFilm(filmId);
-        User user = userStorage.get(userId);
-        if (user == null) {
+        Optional<User> user = userStorage.get(userId);
+        if (user.isEmpty()) {
             throw new NotFoundException("Пользователя с id = " + userId + " не существует.");
         }
-        film.getLikes().add(userId);
+        Film film = filmStorage.likeFilm(filmId, userId);
+        if(film == null) {
+            throw new NotFoundException("Фильм с id = " + filmId + " не существует.");
+        }
         return film;
     }
 
     public Film unlikeFilm(int userId, int filmId) {
-        Film film = getFilm(filmId);
-        User user = userStorage.get(userId);
-        if (user == null) {
+        Optional<User> user = userStorage.get(userId);
+        if (user.isEmpty()) {
             throw new NotFoundException("Пользователя с id = " + userId + " не существует.");
         }
-        film.getLikes().remove(userId);
+
+        Film film = filmStorage.unlikeFilm(filmId, userId);
+        if(film == null) {
+            throw new NotFoundException("Фильм с id = " + filmId + " не существует.");
+        }
         return film;
     }
 
@@ -93,10 +101,7 @@ public class FilmService {
         if (countStr != null) {
             count = Integer.parseInt(countStr);
         }
-        return filmStorage.getFilms().stream()
-                .sorted(new FilmsComparator())
-                .limit(count)
-                .collect(Collectors.toList());
+        return filmStorage.getMostPopularFilms(count);
     }
 
     private void validationFilm(Film film) {
