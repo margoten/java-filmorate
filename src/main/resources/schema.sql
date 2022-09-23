@@ -40,11 +40,10 @@ CREATE TABLE IF NOT EXISTS film_likes (
     user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
     film_id INTEGER REFERENCES film (id) ON DELETE CASCADE,
     PRIMARY KEY(user_id, film_id)
-
     );
 
 
-CREATE TABLE IF NOT EXISTS film_mpa (
+CREATE TABLE IF NOT EXISTS film_genre (
     film_id INTEGER REFERENCES film (id) ON DELETE CASCADE,
     genre_id INTEGER REFERENCES genre (id) ON DELETE CASCADE,
     PRIMARY KEY(film_id, genre_id)

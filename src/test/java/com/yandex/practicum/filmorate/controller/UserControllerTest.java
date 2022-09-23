@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.time.LocalDate;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -24,12 +26,12 @@ class UserControllerTest {
     @BeforeEach
     public void createUser() {
         template = new User(0, "sasadas@dfsdfd.com", "login", "name",
-                "2000-10-10");
+                LocalDate.of(2000, 10, 10));
     }
 
     public User createFriend() {
         return new User(0, "friend@dfsdfd.com", "loginFriend", "nameFriend",
-                "2001-10-10");
+                LocalDate.of(2001, 10, 10));
     }
 
     @Test
@@ -68,7 +70,7 @@ class UserControllerTest {
 
     @Test
     void shouldExceptionWithIncorrectBirthday() {
-        template.setBirthday("2200-10-10");
+        template.setBirthday(LocalDate.of(2200, 10, 10));
         ValidationException ex = assertThrows(ValidationException.class, () -> userController.create(template));
         Assertions.assertEquals("Неверная дата рождения 2200-10-10.", ex.getMessage());
     }

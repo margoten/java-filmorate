@@ -112,7 +112,7 @@ public class UserService {
 
         }
 
-        if (LocalDate.parse(user.getBirthday(), Util.DATE_FORMAT).isAfter(LocalDate.now())) {
+        if (user.getBirthday().isAfter(LocalDate.now())) {
             log.warn("Неверная дата рождения {}.", user.getBirthday());
             throw new ValidationException("Неверная дата рождения " + user.getBirthday() + ".");
 

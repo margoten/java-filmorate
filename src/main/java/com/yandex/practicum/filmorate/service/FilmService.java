@@ -116,7 +116,7 @@ public class FilmService {
         }
 
 
-        if (LocalDate.parse(film.getReleaseDate(), Util.DATE_FORMAT).isBefore(CINEMA_BIRTHDAY)) {
+        if (film.getReleaseDate().isBefore(CINEMA_BIRTHDAY)) {
             log.warn("Релиз фильма раньше {}.", CINEMA_BIRTHDAY.format(Util.DATE_FORMAT));
             throw new ValidationException("Некорректная дата выхода фильма");
         }

@@ -1,10 +1,8 @@
 package com.yandex.practicum.filmorate.storage.dao;
 
-import com.yandex.practicum.filmorate.model.Film;
 import com.yandex.practicum.filmorate.model.User;
 import com.yandex.practicum.filmorate.storage.UserStorage;
 import com.yandex.practicum.filmorate.utils.Util;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,7 +13,6 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,14 +31,16 @@ public class UserDbStorage implements UserStorage {
     @Override
     public Optional<User> get(int id) {
         String select = "SELECT * FROM users WHERE id = ?";
-        SqlRowSet filmRow = jdbcTemplate.queryForRowSet(select, id);
-        if(filmRow.next()) {
-            User user = new User(
-                    filmRow.getInt("id"),
-                    filmRow.getString("email"),
-                    filmRow.getString("login"),
-                    filmRow.getString("name"),
-                    filmRow.getDate("birthday").toLocalDate().format(Util.DATE_FORMAT));
+        SqlRowSet userRow = jdbcTemplate.queryForRowSet(select, id);
+        if (userRow.next()) {
+            User user = User.builder()
+                    .id(userRow.getInt("id"))
+                    .email(userRow.getString("email"))
+                    .login(userRow.getString("login"))
+                    .name(userRow.getString("name"))
+                    .birthday(userRow.getDate("birthday").toLocalDate())
+                    .build();
+            user.getFriends().addAll(getUserFriends(id));
 
             return Optional.of(user);
         } else {
@@ -51,10 +50,8 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User create(User user) {
-        LocalDate localDate = LocalDate.parse(user.getBirthday(), Util.DATE_FORMAT);
-
         String insert = "INSERT INTO users (ID, EMAIL, LOGIN, NAME, BIRTHDAY) VALUES ( ?, ?, ?, ?, ?)";
-        jdbcTemplate.update(insert, user.getId(), user.getEmail(), user.getLogin(), user.getName(), Date.valueOf(localDate));
+        jdbcTemplate.update(insert, user.getId(), user.getEmail(), user.getLogin(), user.getName(), Date.valueOf(user.getBirthday()));
         return user;
     }
 
@@ -68,13 +65,22 @@ public class UserDbStorage implements UserStorage {
         return null;
     }
 
+    private List<Integer> getUserFriends(int userId) {
+        String select = "SELECT friends_id \n" +
+                "FROM user_friends \n" +
+                "WHERE user_id = ?";
+        return jdbcTemplate.query(select, (rs, rowNum) -> rs.getInt("friends_id"), userId);
+    }
+
     private User makeUser(ResultSet rs) throws SQLException {
         int id = rs.getInt("id");
-        String email = rs.getString("email");
-        String login = rs.getString("login");
-        String name = rs.getString("name");
-        String birthday = rs.getDate("birthday").toLocalDate().format(Util.DATE_FORMAT);
-
-        return new User(id, email, login, name, birthday);
+        User user = User.builder().id(id)
+                .login(rs.getString("login"))
+                .email(rs.getString("email"))
+                .name(rs.getString("name"))
+                .birthday(rs.getDate("birthday").toLocalDate())
+                .build();
+        user.getFriends().addAll(getUserFriends(id));
+        return user;
     }
 }

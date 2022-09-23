@@ -12,4 +12,8 @@ public interface MpaStorage {
     List<Mpa> getMpa();
 
     Optional<Mpa> get(int id);
+
+    int getFilmMpa(int filmId);
+
+    void setFilmMpa(int filmId, int mpaId);
 }

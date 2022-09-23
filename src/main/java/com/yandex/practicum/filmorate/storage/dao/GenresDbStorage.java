@@ -39,11 +39,24 @@ public class GenresDbStorage implements GenresStorage {
         }
     }
 
-    private Genre makeGenre(ResultSet rs) throws SQLException {
-        int id = rs.getInt("id");
-        String name = rs.getString("name");
+    @Override
+    public void addFilmGenre(int filmId, int genreId) {
+        String insert = "INSERT INTO film_mpa (film_id, genre_id) VALUES ( ?, ?)";
+        jdbcTemplate.update(insert, filmId, genreId);
+    }
 
-        return new Genre(id, name);
+    @Override
+    public List<Genre> getFilmGenres(int filmId) {
+        String select = "SELECT * \n" +
+                "FROM genre \n" +
+                "INNER JOIN film_genre ON film_genre.genre_id = genre.id\n" +
+                "AND film_genre.film_id = ?";
+        return jdbcTemplate.query(select, (rs, rowNum) -> makeGenre(rs), filmId);
+    }
+
+
+    private Genre makeGenre(ResultSet rs) throws SQLException {
+        return new Genre(rs.getInt("id"), rs.getString("name"));
     }
 }
 

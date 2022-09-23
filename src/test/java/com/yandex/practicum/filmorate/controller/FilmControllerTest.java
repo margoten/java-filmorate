@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,9 +33,9 @@ class FilmControllerTest {
     @BeforeEach
     public void createFilm() {
         user = userService.createUser(new User(0, "sasadas@dfsdfd.com", "login", "name",
-                "2000-10-10"));
+                LocalDate.of(2000, 10, 10)));
         template = new Film(0, "name", "descr",
-                "2000-10-10", 10);
+                LocalDate.of(2000, 10, 10), 10, 1);
     }
 
     @Test
@@ -69,7 +70,7 @@ class FilmControllerTest {
 
     @Test
     void shouldExceptionWithIncorrectReleaseDay() {
-        template.setReleaseDate("1600-10-10");
+        template.setReleaseDate(LocalDate.of(1600,10,10));
         ValidationException ex = assertThrows(ValidationException.class, () -> filmController.create(template));
         Assertions.assertEquals("Некорректная дата выхода фильма", ex.getMessage());
 

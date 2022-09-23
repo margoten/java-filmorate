@@ -19,6 +19,8 @@ import java.util.Optional;
 public class FilmDbStorage implements FilmStorage {
 
     private final JdbcTemplate jdbcTemplate;
+    private final MpaDbStorage mpaDbStorage;
+    private final GenresDbStorage genresDbStorage;
 
 
     @Override
@@ -50,13 +52,16 @@ public class FilmDbStorage implements FilmStorage {
         String select = "SELECT * FROM film WHERE id = ?";
         SqlRowSet filmRow = jdbcTemplate.queryForRowSet(select, filmId);
         if (filmRow.next()) {
-            Film film = new Film(
-                    filmRow.getInt("id"),
-                    filmRow.getString("name"),
-                    filmRow.getString("description"),
-                    filmRow.getDate("release_date").toLocalDate().format(Util.DATE_FORMAT),
-                    filmRow.getInt("duration"));
-
+            Film film = Film.builder()
+                    .id(filmRow.getInt("id"))
+                    .name(filmRow.getString("name"))
+                    .description(filmRow.getString("description"))
+                    .duration(filmRow.getInt("duration"))
+                    .releaseDate(filmRow.getDate("release_date").toLocalDate())
+                    .mpaId(mpaDbStorage.getFilmMpa(filmId))
+                    .build();
+            film.getGenres().addAll(genresDbStorage.getFilmGenres(filmId));
+            film.getLikes().addAll(getUserLikes(filmId));
             return Optional.of(film);
         } else {
             return Optional.empty();
@@ -66,13 +71,24 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getMostPopularFilms(int count) {
-        String select = "SELECT f.*, fl.user_id FROM film AS f LEFT OUTER JOIN film_likes AS fl ON f.id = fl.film_id GROUP BY f.id, fl.user_id ORDER BY COUNT(fl.user_id) DESC LIMIT 10;";
-        return null;
+        String select = "SELECT f.*" +
+                "FROM film AS f " +
+                "LEFT OUTER JOIN film_likes AS fl ON f.id = fl.film_id " +
+                "GROUP BY f.id, fl.user_id " +
+                "ORDER BY COUNT(fl.user_id) DESC " +
+                "LIMIT ?";
+        List<Film> films = jdbcTemplate.query(select, (rs, rowNum) -> makeFilm(rs));
+        films.forEach(film -> {
+            film.getGenres().addAll(genresDbStorage.getFilmGenres(film.getId()));
+            film.getLikes().addAll(getUserLikes(film.getId()));
+            film.setMpaId(mpaDbStorage.getFilmMpa(film.getId()));
+        });
+        return films;
     }
 
     @Override
     public Film likeFilm(int filmId, int userId) {
-        String insert = "INSERT OR REPLACE INTO film_likes (user_id, film_id) VALUES ( ?, ?)";
+        String insert = "INSERT INTO film_likes (user_id, film_id) VALUES ( ?, ?)";
         jdbcTemplate.update(insert, userId, filmId);
         return null;
     }
@@ -84,13 +100,26 @@ public class FilmDbStorage implements FilmStorage {
         return null;
     }
 
+    private List<Integer> getUserLikes(int filmId) {
+        String select = "SELECT user_id \n" +
+                "FROM film_likes \n" +
+                "WHERE film_id = ?";
+        return jdbcTemplate.query(select, (rs, rowNum) -> rs.getInt("user_id"), filmId);
+    }
+
     private Film makeFilm(ResultSet rs) throws SQLException {
         int id = rs.getInt("id");
-        String name = rs.getString("name");
-        String description = rs.getString("description");
-        int duration = rs.getInt("duration");
-        String releaseDate = rs.getDate("release_date").toLocalDate().format(Util.DATE_FORMAT);
+        Film film = Film.builder()
+                .id(id)
+                .name(rs.getString("name"))
+                .description(rs.getString("description"))
+                .duration(rs.getInt("duration"))
+                .releaseDate(rs.getDate("release_date").toLocalDate())
+                .mpaId(mpaDbStorage.getFilmMpa(id))
+                .build();
+        film.getLikes().addAll(getUserLikes(id));
+        film.getGenres().addAll(genresDbStorage.getFilmGenres(id));
+        return film;
 
-        return new Film(id, name, description, releaseDate, duration);
     }
 }
