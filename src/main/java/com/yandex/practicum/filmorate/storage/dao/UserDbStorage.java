@@ -2,7 +2,6 @@ package com.yandex.practicum.filmorate.storage.dao;
 
 import com.yandex.practicum.filmorate.model.User;
 import com.yandex.practicum.filmorate.storage.UserStorage;
-import com.yandex.practicum.filmorate.utils.Util;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Component;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -62,7 +60,7 @@ public class UserDbStorage implements UserStorage {
 
         jdbcTemplate.update(delete, user.getId());
         jdbcTemplate.update(insert, user.getId(), user.getEmail(), user.getLogin(), user.getName(), user.getBirthday());
-        return null;
+        return get(user.getId()).get();
     }
 
     private List<Integer> getUserFriends(int userId) {
@@ -70,6 +68,18 @@ public class UserDbStorage implements UserStorage {
                 "FROM user_friends \n" +
                 "WHERE user_id = ?";
         return jdbcTemplate.query(select, (rs, rowNum) -> rs.getInt("friends_id"), userId);
+    }
+
+    @Override
+    public void addToFriend(User targetUser, User friend) {
+        String insert = "INSERT INTO user_friends (user_id, friends_id) VALUES ( ?, ?)";
+        jdbcTemplate.update(insert, targetUser.getId(), friend.getId());
+    }
+
+    @Override
+    public void removeFromFriend(User targetUser, User friend) {
+        String remove = "DELETE FROM user_friends WHERE user_id = ? AND friends_id = ?";
+        jdbcTemplate.update(remove, targetUser.getId(), friend.getId());
     }
 
     private User makeUser(ResultSet rs) throws SQLException {

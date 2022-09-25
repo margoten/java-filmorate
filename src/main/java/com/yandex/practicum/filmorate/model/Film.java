@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
+import org.springframework.data.relational.core.sql.In;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
@@ -24,7 +25,7 @@ public class Film {
     private LocalDate releaseDate;
     @NonNull
     private int duration;
-    private Integer mpaId;
+    private Mpa mpa;
     private final Set<Integer> likes = new HashSet<>();
     private final Set<Genre> genres = new HashSet<>();
 }

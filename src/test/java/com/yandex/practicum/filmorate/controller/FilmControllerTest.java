@@ -89,15 +89,17 @@ class FilmControllerTest {
     void shouldCorrectLikeFilm() {
         Film film = filmController.create(template);
         filmController.likeFilm(film.getId(), user.getId());
-        assertEquals(film.getLikes().size(), 1);
-        assertTrue(film.getLikes().contains(user.getId()));
+        var returned = filmController.getFilm(film.getId());
+        assertEquals(returned.getLikes().size(), 1);
+        assertTrue(returned.getLikes().contains(user.getId()));
     }
 
     @Test
     void shouldEmptyLikeFilm() {
         Film film = filmController.create(template);
-        assertNotNull(film.getLikes());
-        assertEquals(film.getLikes().size(), 0);
+        var returned = filmController.getFilm(film.getId());
+        assertNotNull(returned.getLikes());
+        assertEquals(returned.getLikes().size(), 0);
     }
 
     @Test

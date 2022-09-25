@@ -3,9 +3,11 @@ package com.yandex.practicum.filmorate.service;
 import com.yandex.practicum.filmorate.exeption.NotFoundException;
 import com.yandex.practicum.filmorate.exeption.ValidationException;
 import com.yandex.practicum.filmorate.model.Film;
-import com.yandex.practicum.filmorate.model.User;
-import com.yandex.practicum.filmorate.model.comparator.FilmsComparator;
+import com.yandex.practicum.filmorate.model.Genre;
+import com.yandex.practicum.filmorate.model.Mpa;
 import com.yandex.practicum.filmorate.storage.FilmStorage;
+import com.yandex.practicum.filmorate.storage.GenresStorage;
+import com.yandex.practicum.filmorate.storage.MpaStorage;
 import com.yandex.practicum.filmorate.storage.UserStorage;
 import com.yandex.practicum.filmorate.utils.Util;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +18,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,14 +28,21 @@ public class FilmService {
     private static final int MAX_FILM_DESCRIPTION_SIZE = 200;
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
+
+    private final MpaStorage mpaStorage;
+    private final GenresStorage genresStorage;
     private static final int DEFAULT_COUNT_POPULAR_FILMS = 10;
     private int idGenerator = 0;
 
     @Autowired
     public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
-                       @Qualifier("userDbStorage") UserStorage userStorage) {
+                       @Qualifier("userDbStorage") UserStorage userStorage,
+                       MpaStorage mpaStorage,
+                       GenresStorage genresStorage) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
+        this.mpaStorage = mpaStorage;
+        this.genresStorage = genresStorage;
     }
 
     public Film createFilm(Film film) {
@@ -41,8 +50,27 @@ public class FilmService {
             throw new ValidationException("Фильм не может быть создан.");
         }
         validationFilm(film);
+        Mpa mpa = mpaStorage.get(film.getMpa().getId())
+                .orElseThrow(() -> {
+                    throw new NotFoundException("Рейтинг не существует.");
+                });
+
+        if (film.getGenres() != null) {
+            List<Integer> genresIds = film.getGenres()
+                    .stream()
+                    .map(Genre::getId)
+                    .collect(Collectors.toList());
+            Map<Integer, Genre> genres = genresStorage.getGenres(genresIds);
+            if (genres.size() != genresIds.size()) {
+                throw new NotFoundException("Жанра не существует.");
+            }
+            film.getGenres().forEach(genre -> {
+                genre.setName(genres.get(genre.getId()).getName());
+            });
+        }
 
         film.setId(generatedId());
+        film.setMpa(mpa);
         return filmStorage.create(film);
     }
 
@@ -56,40 +84,57 @@ public class FilmService {
             throw new NotFoundException("Фильм не существует.");
         }
         validationFilm(film);
+        Mpa mpa = mpaStorage.get(film.getMpa().getId())
+                .orElseThrow(() -> {
+                    throw new NotFoundException("Рейтинг не существует.");
+                });
+        film.setMpa(mpa);
+
+        if (film.getGenres() != null) {
+            List<Integer> genresIds = film.getGenres()
+                    .stream()
+                    .map(Genre::getId)
+                    .collect(Collectors.toList());
+            Map<Integer, Genre> genres = genresStorage.getGenres(genresIds);
+            if (genres.size() != genresIds.size()) {
+                throw new NotFoundException("Жанра не существует.");
+            }
+            film.getGenres().forEach(genre -> {
+                genre.setName(genres.get(genre.getId()).getName());
+            });
+        }
         return filmStorage.update(film);
     }
 
     public Film getFilm(int id) {
-        Optional<Film> film = filmStorage.get(id);
-        if (film.isEmpty()) {
+        return filmStorage.get(id).orElseThrow(() -> {
             throw new NotFoundException("Фильм с id = " + id + " не существует.");
-        }
-        return film.get();
+        });
     }
 
-    public Film likeFilm(int userId, int filmId) {
-        Optional<User> user = userStorage.get(userId);
-        if (user.isEmpty()) {
+    public void likeFilm(int userId, int filmId) {
+        userStorage.get(userId).orElseThrow(() -> {
             throw new NotFoundException("Пользователя с id = " + userId + " не существует.");
-        }
-        Film film = filmStorage.likeFilm(filmId, userId);
-        if(film == null) {
+        });
+
+        Film film = filmStorage.get(filmId).orElseThrow(() -> {
             throw new NotFoundException("Фильм с id = " + filmId + " не существует.");
-        }
-        return film;
+        });
+        filmStorage.likeFilm(film, userId);
+
     }
 
-    public Film unlikeFilm(int userId, int filmId) {
-        Optional<User> user = userStorage.get(userId);
-        if (user.isEmpty()) {
+    public void unlikeFilm(int userId, int filmId) {
+        userStorage.get(userId).orElseThrow(() -> {
             throw new NotFoundException("Пользователя с id = " + userId + " не существует.");
-        }
+        });
 
-        Film film = filmStorage.unlikeFilm(filmId, userId);
-        if(film == null) {
+        Film film = filmStorage.get(filmId).orElseThrow(() -> {
             throw new NotFoundException("Фильм с id = " + filmId + " не существует.");
-        }
-        return film;
+        });
+
+        filmStorage.unlikeFilm(film, userId);
+
     }
 
     public List<Film> getFilms() {
@@ -124,6 +169,11 @@ public class FilmService {
         if (film.getDuration() <= 0) {
             log.warn("Некорректная продолжительность фильма {}.", film.getDuration());
             throw new ValidationException("Некорректная продолжительность фильма " + film.getDuration() + ".");
+        }
+
+        if (film.getMpa() == null) {
+            log.warn("Некорректный рейтинг фильма {}.", film.getMpa());
+            throw new ValidationException("Некорректный рейтинг фильма " + film.getMpa() + ".");
         }
     }
 

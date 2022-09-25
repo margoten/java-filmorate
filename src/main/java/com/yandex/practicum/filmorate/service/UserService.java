@@ -64,15 +64,13 @@ public class UserService {
     public void addToFriends(int targetUserId, int friendId) {
         User targetUser = getUser(targetUserId);
         User friend = getUser(friendId);
-        targetUser.getFriends().add(friendId);
-        friend.getFriends().add(targetUserId);
+        userStorage.addToFriend(targetUser, friend);
     }
 
     public void removeFromFriends(int targetUserId, int friendId) {
         User targetUser = getUser(targetUserId);
         User friend = getUser(friendId);
-        targetUser.getFriends().remove(friendId);
-        friend.getFriends().remove(targetUserId);
+        userStorage.removeFromFriend(targetUser, friend);
     }
 
     public List<User> getFriends(int userId) {
@@ -87,11 +85,13 @@ public class UserService {
     public List<User> getCommonFriends(int targetUserId, int otherUserId) {
         User targetUser = getUser(targetUserId);
         User otherUser = getUser(otherUserId);
-        return targetUser.getFriends().stream().filter(id -> otherUser.getFriends().contains(id))
+        var  list =  targetUser.getFriends().stream().filter(id -> otherUser.getFriends().contains(id))
                 .map(userStorage::get)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());
+        log.warn("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ " + targetUserId + " " + otherUserId + " " + list);
+        return list;
     }
 
     private void validationUser(User user) {

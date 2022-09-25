@@ -40,25 +40,13 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film likeFilm(int filmId, int userId) {
-        Optional<Film> film = get(filmId);
-        if(film.isEmpty()) {
-            return null;
-        }
-        var likedFilm = film.get();
-        likedFilm.getLikes().add(userId);
-        return likedFilm;
+    public void likeFilm(Film film, int userId) {
+        film.getLikes().add(userId);
     }
 
     @Override
-    public Film unlikeFilm(int filmId, int userId) {
-        Optional<Film> film = get(filmId);
-        if(film.isEmpty()) {
-            return null;
-        }
-        var unlikedFilm = film.get();
-        unlikedFilm.getLikes().add(userId);
-        return unlikedFilm;
+    public void unlikeFilm(Film film, int userId) {
+        film.getLikes().remove(userId);
     }
 
     @Override

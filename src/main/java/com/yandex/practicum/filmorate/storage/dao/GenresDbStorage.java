@@ -10,8 +10,12 @@ import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component("genresDbStorage")
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
@@ -20,13 +24,13 @@ public class GenresDbStorage implements GenresStorage {
 
     @Override
     public List<Genre> getGenres() {
-        String select = "SELECT * FROM genres";
+        String select = "SELECT * FROM genre";
         return jdbcTemplate.query(select, (rs, rowNum) -> makeGenre(rs));
     }
 
     @Override
     public Optional<Genre> get(int id) {
-        String select = "SELECT * FROM genres WHERE id = ?";
+        String select = "SELECT * FROM genre WHERE id = ?";
         SqlRowSet genreRow = jdbcTemplate.queryForRowSet(select, id);
         if (genreRow.next()) {
             Genre genre = new Genre(
@@ -40,8 +44,17 @@ public class GenresDbStorage implements GenresStorage {
     }
 
     @Override
+    public Map<Integer, Genre> getGenres(List<Integer> ids) {
+        String in = String.join(",", Collections.nCopies(ids.size(), "?"));
+        String select = String.format("SELECT * FROM genre WHERE id IN (%s)", in);
+        return jdbcTemplate.query(select, (rs, rowNum) -> makeGenre(rs), ids.toArray())
+                .stream()
+                .collect(Collectors.toMap(Genre::getId, Function.identity()));
+    }
+
+    @Override
     public void addFilmGenre(int filmId, int genreId) {
-        String insert = "INSERT INTO film_mpa (film_id, genre_id) VALUES ( ?, ?)";
+        String insert = "INSERT INTO film_genre (film_id, genre_id) VALUES ( ?, ?)";
         jdbcTemplate.update(insert, filmId, genreId);
     }
 
