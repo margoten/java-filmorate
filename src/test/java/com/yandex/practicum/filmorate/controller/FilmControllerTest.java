@@ -3,6 +3,7 @@ package com.yandex.practicum.filmorate.controller;
 import com.yandex.practicum.filmorate.exeption.NotFoundException;
 import com.yandex.practicum.filmorate.exeption.ValidationException;
 import com.yandex.practicum.filmorate.model.Film;
+import com.yandex.practicum.filmorate.model.Mpa;
 import com.yandex.practicum.filmorate.model.User;
 import com.yandex.practicum.filmorate.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +36,7 @@ class FilmControllerTest {
         user = userService.createUser(new User(0, "sasadas@dfsdfd.com", "login", "name",
                 LocalDate.of(2000, 10, 10)));
         template = new Film(0, "name", "descr",
-                LocalDate.of(2000, 10, 10), 10, 1);
+                LocalDate.of(2000, 10, 10), 10, null);
     }
 
     @Test

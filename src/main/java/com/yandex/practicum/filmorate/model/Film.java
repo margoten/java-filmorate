@@ -8,7 +8,9 @@ import org.springframework.data.relational.core.sql.In;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 
@@ -27,5 +29,5 @@ public class Film {
     private int duration;
     private Mpa mpa;
     private final Set<Integer> likes = new HashSet<>();
-    private final Set<Genre> genres = new HashSet<>();
+    private final List<Genre> genres = new ArrayList<>();
 }

@@ -3,6 +3,7 @@ package com.yandex.practicum.filmorate.storage.dao;
 import com.yandex.practicum.filmorate.model.Genre;
 import com.yandex.practicum.filmorate.storage.GenresStorage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 
 @Component("genresDbStorage")
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
+@Slf4j
 public class GenresDbStorage implements GenresStorage {
     private final JdbcTemplate jdbcTemplate;
 
@@ -54,8 +56,14 @@ public class GenresDbStorage implements GenresStorage {
 
     @Override
     public void addFilmGenre(int filmId, int genreId) {
-        String insert = "INSERT INTO film_genre (film_id, genre_id) VALUES ( ?, ?)";
+        String insert = "INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)";
         jdbcTemplate.update(insert, filmId, genreId);
+    }
+
+    @Override
+    public void removeFilmGenre(int filmId, int genreId) {
+        String delete = "DELETE FROM film_genre WHERE film_id = ? AND genre_id = ?";
+        jdbcTemplate.update(delete, filmId, genreId);
     }
 
     @Override

@@ -1,9 +1,11 @@
 package com.yandex.practicum.filmorate.storage.dao;
 
 import com.yandex.practicum.filmorate.model.Film;
+import com.yandex.practicum.filmorate.model.Genre;
 import com.yandex.practicum.filmorate.model.Mpa;
 import com.yandex.practicum.filmorate.storage.FilmStorage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -13,19 +15,19 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component("filmDbStorage")
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
+@Slf4j
 public class FilmDbStorage implements FilmStorage {
 
     private final JdbcTemplate jdbcTemplate;
-    private final MpaDbStorage mpaDbStorage;
     private final GenresDbStorage genresDbStorage;
 
 
     @Override
     public List<Film> getFilms() {
-       // String select = "SELECT * FROM film";
         String select = "SELECT f.*, m.id AS mpa_id, m.name AS mpa_name " +
                 "FROM film AS f " +
                 "INNER JOIN mpa AS m ON f.mpa = m.id";
@@ -36,7 +38,7 @@ public class FilmDbStorage implements FilmStorage {
     public Film create(Film film) {
         String insert = "INSERT INTO film (id, name, description, release_date, duration, mpa) VALUES ( ?, ?, ?, ?,?,?)";
         jdbcTemplate.update(insert, film.getId(), film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), film.getMpa().getId());
-        if(film.getGenres() != null) {
+        if (film.getGenres() != null) {
             film.getGenres().forEach(genre -> {
                 genresDbStorage.addFilmGenre(film.getId(), genre.getId());
             });
@@ -49,11 +51,15 @@ public class FilmDbStorage implements FilmStorage {
         String update = "UPDATE film SET name = ?, description = ?, release_date = ?, duration = ?, mpa = ?" +
                 "WHERE id = ?";
         jdbcTemplate.update(update, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), film.getMpa().getId(), film.getId());
-        if(film.getGenres() != null) {
-            film.getGenres().forEach(genre -> {
-                genresDbStorage.addFilmGenre(film.getId(), genre.getId());
-            });
-        }
+        List<Genre> existFilmGenres = genresDbStorage.getFilmGenres(film.getId());
+        existFilmGenres.stream()
+                .filter(genre -> !film.getGenres().contains(genre))
+                .map(Genre::getId)
+                .forEach(id -> genresDbStorage.removeFilmGenre(film.getId(), id));
+        film.getGenres().stream()
+                .filter(genre -> !existFilmGenres.contains(genre))
+                .map(Genre::getId)
+                .forEach(id -> genresDbStorage.addFilmGenre(film.getId(), id));
         return film;
     }
 
@@ -71,7 +77,7 @@ public class FilmDbStorage implements FilmStorage {
                     .description(filmRow.getString("description"))
                     .duration(filmRow.getInt("duration"))
                     .releaseDate(filmRow.getDate("release_date").toLocalDate())
-                     .mpa(new Mpa(filmRow.getInt("mpa"), filmRow.getString("MPA_NAME")))
+                    .mpa(new Mpa(filmRow.getInt("mpa"), filmRow.getString("MPA_NAME")))
                     .build();
             film.getGenres().addAll(genresDbStorage.getFilmGenres(filmId));
             film.getLikes().addAll(getUserLikes(filmId));

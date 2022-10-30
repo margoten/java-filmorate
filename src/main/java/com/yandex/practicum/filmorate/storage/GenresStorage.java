@@ -15,5 +15,7 @@ public interface GenresStorage {
     Map<Integer, Genre> getGenres(List<Integer> ids);
     void addFilmGenre(int filmId, int genreId);
 
+    void removeFilmGenre(int filmId, int genreId);
+
     List<Genre> getFilmGenres(int filmId);
 }

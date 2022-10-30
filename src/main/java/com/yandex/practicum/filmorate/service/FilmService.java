@@ -59,14 +59,14 @@ public class FilmService {
             List<Integer> genresIds = film.getGenres()
                     .stream()
                     .map(Genre::getId)
+                    .distinct()
                     .collect(Collectors.toList());
             Map<Integer, Genre> genres = genresStorage.getGenres(genresIds);
             if (genres.size() != genresIds.size()) {
                 throw new NotFoundException("Жанра не существует.");
             }
-            film.getGenres().forEach(genre -> {
-                genre.setName(genres.get(genre.getId()).getName());
-            });
+            film.getGenres().clear();
+            film.getGenres().addAll(genres.values());
         }
 
         film.setId(generatedId());
@@ -94,14 +94,14 @@ public class FilmService {
             List<Integer> genresIds = film.getGenres()
                     .stream()
                     .map(Genre::getId)
+                    .distinct()
                     .collect(Collectors.toList());
             Map<Integer, Genre> genres = genresStorage.getGenres(genresIds);
             if (genres.size() != genresIds.size()) {
                 throw new NotFoundException("Жанра не существует.");
             }
-            film.getGenres().forEach(genre -> {
-                genre.setName(genres.get(genre.getId()).getName());
-            });
+            film.getGenres().clear();
+            film.getGenres().addAll(genres.values());
         }
         return filmStorage.update(film);
     }
