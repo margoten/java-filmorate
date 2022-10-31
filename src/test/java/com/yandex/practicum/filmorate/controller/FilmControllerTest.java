@@ -79,7 +79,7 @@ class FilmControllerTest {
 
     @Test
     void shouldExceptionUpdateWithNonContainsId() {
-        template.setId(4);
+        template.setId(-1);
         NotFoundException ex = assertThrows(NotFoundException.class, () -> filmController.update(template));
         Assertions.assertEquals("Фильм не существует.", ex.getMessage());
 

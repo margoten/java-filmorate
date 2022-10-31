@@ -77,7 +77,7 @@ class UserControllerTest {
 
     @Test
     void shouldExceptionUpdateWithNonContainsId() {
-        template.setId(2);
+        template.setId(-1);
         NotFoundException ex = assertThrows(NotFoundException.class, () -> userController.update(template));
         Assertions.assertEquals("Пользователь не существует.", ex.getMessage());
     }
