@@ -27,7 +27,7 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public Optional<User> get(int id) {
+    public Optional<User> getUserById(int id) {
         String select = "SELECT * FROM users WHERE id = ?";
         SqlRowSet userRow = jdbcTemplate.queryForRowSet(select, id);
         if (userRow.next()) {
@@ -54,13 +54,13 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public User update(User user) {
+    public Optional<User> update(User user) {
         String delete = "DELETE FROM users WHERE id = ?";
         String insert = "INSERT INTO users (id, email, login, name, birthday) VALUES ( ?, ?, ?, ?,?)";
 
         jdbcTemplate.update(delete, user.getId());
         jdbcTemplate.update(insert, user.getId(), user.getEmail(), user.getLogin(), user.getName(), user.getBirthday());
-        return get(user.getId()).get();
+        return getUserById(user.getId());
     }
 
     private List<Integer> getUserFriends(int userId) {

@@ -8,11 +8,11 @@ import java.util.Optional;
 public interface UserStorage {
     List<User> getUsers();
 
-    Optional<User> get(int id);
+    Optional<User> getUserById(int id);
 
     User create(User user);
 
-    User update(User user);
+    Optional<User> update(User user);
 
     void addToFriend(User targetUser, User friend);
 

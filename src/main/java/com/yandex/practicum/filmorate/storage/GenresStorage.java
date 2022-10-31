@@ -11,8 +11,10 @@ import java.util.Optional;
 public interface GenresStorage {
     List<Genre> getGenres();
 
-    Optional<Genre> get(int id);
-    Map<Integer, Genre> getGenres(List<Integer> ids);
+    Optional<Genre> getGenreById(int id);
+
+    Map<Integer, Genre> getGenresByIds(List<Integer> ids);
+
     void addFilmGenre(int filmId, int genreId);
 
     void removeFilmGenre(int filmId, int genreId);

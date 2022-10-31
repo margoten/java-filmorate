@@ -31,7 +31,7 @@ public class GenresDbStorage implements GenresStorage {
     }
 
     @Override
-    public Optional<Genre> get(int id) {
+    public Optional<Genre> getGenreById(int id) {
         String select = "SELECT * FROM genre WHERE id = ?";
         SqlRowSet genreRow = jdbcTemplate.queryForRowSet(select, id);
         if (genreRow.next()) {
@@ -46,7 +46,7 @@ public class GenresDbStorage implements GenresStorage {
     }
 
     @Override
-    public Map<Integer, Genre> getGenres(List<Integer> ids) {
+    public Map<Integer, Genre> getGenresByIds(List<Integer> ids) {
         String in = String.join(",", Collections.nCopies(ids.size(), "?"));
         String select = String.format("SELECT * FROM genre WHERE id IN (%s)", in);
         return jdbcTemplate.query(select, (rs, rowNum) -> makeGenre(rs), ids.toArray())

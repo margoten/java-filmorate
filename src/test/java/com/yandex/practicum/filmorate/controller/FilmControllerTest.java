@@ -36,7 +36,7 @@ class FilmControllerTest {
         user = userService.createUser(new User(0, "sasadas@dfsdfd.com", "login", "name",
                 LocalDate.of(2000, 10, 10)));
         template = new Film(0, "name", "descr",
-                LocalDate.of(2000, 10, 10), 10, null);
+                LocalDate.of(2000, 10, 10), 10, new Mpa(1, "G"));
     }
 
     @Test

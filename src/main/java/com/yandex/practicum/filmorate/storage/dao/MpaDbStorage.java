@@ -25,7 +25,7 @@ public class MpaDbStorage implements MpaStorage {
     }
 
     @Override
-    public Optional<Mpa> get(int id) {
+    public Optional<Mpa> getMpaById(int id) {
         String select = "SELECT * FROM mpa WHERE id = ?";
         SqlRowSet mpaRow = jdbcTemplate.queryForRowSet(select, id);
         if (mpaRow.next()) {

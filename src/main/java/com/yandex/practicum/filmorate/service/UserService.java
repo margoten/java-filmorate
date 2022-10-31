@@ -41,20 +41,18 @@ public class UserService {
         if (user == null) {
             throw new ValidationException("Пользователь не может быть обновлен.");
         }
-        if (userStorage.get(user.getId()).isEmpty()) {
+        if (userStorage.getUserById(user.getId()).isEmpty()) {
             log.warn("Пользователь с id {} не существует.", user.getId());
             throw new NotFoundException("Пользователь не существует.");
         }
         validationUser(user);
-        return userStorage.update(user);
+        return userStorage.update(user).get();
     }
 
     public User getUser(Integer userId) {
-        Optional<User> user = userStorage.get(userId);
-        if (user.isEmpty()) {
+        return userStorage.getUserById(userId).orElseThrow(() -> {
             throw new NotFoundException("Пользователя с id = " + userId + " не существует.");
-        }
-        return user.get();
+        });
     }
 
     public List<User> getUsers() {
@@ -76,7 +74,7 @@ public class UserService {
     public List<User> getFriends(int userId) {
         User user = getUser(userId);
         return user.getFriends().stream()
-                .map(userStorage::get)
+                .map(userStorage::getUserById)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());
@@ -85,13 +83,11 @@ public class UserService {
     public List<User> getCommonFriends(int targetUserId, int otherUserId) {
         User targetUser = getUser(targetUserId);
         User otherUser = getUser(otherUserId);
-        var  list =  targetUser.getFriends().stream().filter(id -> otherUser.getFriends().contains(id))
-                .map(userStorage::get)
+        return   targetUser.getFriends().stream().filter(id -> otherUser.getFriends().contains(id))
+                .map(userStorage::getUserById)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());
-        log.warn("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ " + targetUserId + " " + otherUserId + " " + list);
-        return list;
     }
 
     private void validationUser(User user) {

@@ -8,9 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -23,10 +21,8 @@ public class GenresService {
     }
 
     public Genre getGenre(int id) {
-        Optional<Genre> genre = genresStorage.get(id);
-        if (genre.isEmpty()) {
+        return genresStorage.getGenreById(id).orElseThrow(() -> {
             throw new NotFoundException("Жанр с id = " + id + " не существует.");
-        }
-        return genre.get();
+        });
     }
 }

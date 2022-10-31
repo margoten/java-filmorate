@@ -21,14 +21,14 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public Optional<User> get(int id) {
+    public Optional<User> getUserById(int id) {
         return Optional.of(users.get(id));
     }
 
     @Override
-    public User update(User user) {
+    public Optional<User> update(User user) {
         users.put(user.getId(), user);
-        return user;
+        return Optional.of(user);
     }
 
     @Override

@@ -16,21 +16,14 @@ import java.util.Optional;
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class MpaService {
     private final MpaStorage mpaStorage;
-    private int idGenerator = 0;
 
     public Mpa getMpa(int id) {
-        Optional<Mpa> mpa = mpaStorage.get(id);
-        if (mpa.isEmpty()) {
+        return mpaStorage.getMpaById(id).orElseThrow(() -> {
             throw new NotFoundException("Рейтинг с id = " + id + " не существует.");
-        }
-        return mpa.get();
+        });
     }
 
     public List<Mpa> getAllMpa() {
         return mpaStorage.getMpa();
-    }
-
-    private int generatedId() {
-        return ++idGenerator;
     }
 }
