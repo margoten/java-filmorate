@@ -5,10 +5,14 @@ import com.yandex.practicum.filmorate.storage.GenresStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.relational.core.sql.In;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -18,7 +22,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Component("genresDbStorage")
+@Component("genresStorage")
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 @Slf4j
 public class GenresDbStorage implements GenresStorage {
@@ -55,15 +59,43 @@ public class GenresDbStorage implements GenresStorage {
     }
 
     @Override
-    public void addFilmGenre(int filmId, int genreId) {
-        String insert = "INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)";
-        jdbcTemplate.update(insert, filmId, genreId);
-    }
+    public void addFilmGenres(int filmId, List<Integer> genreIds) {
+        jdbcTemplate.batchUpdate(
+                "INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)",
+                new BatchPreparedStatementSetter() {
 
+                    public void setValues(PreparedStatement ps, int i)
+                            throws SQLException {
+                        ps.setInt(1, filmId);
+                        ps.setInt(2, genreIds.get(i));
+                    }
+
+                    public int getBatchSize() {
+                        return genreIds.size();
+                    }
+
+                });
+
+//        String insert = "INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)";
+//        jdbcTemplate.update(insert, filmId, genreId);
+    }
     @Override
-    public void removeFilmGenre(int filmId, int genreId) {
-        String delete = "DELETE FROM film_genre WHERE film_id = ? AND genre_id = ?";
-        jdbcTemplate.update(delete, filmId, genreId);
+    public void removeFilmGenres(int filmId, List<Integer> genreIds) {
+        jdbcTemplate.batchUpdate(
+                "DELETE FROM film_genre WHERE film_id = ? AND genre_id = ?",
+                new BatchPreparedStatementSetter() {
+
+                    public void setValues(PreparedStatement ps, int i)
+                            throws SQLException {
+                        ps.setInt(1, filmId);
+                        ps.setInt(2, genreIds.get(i));
+                    }
+
+                    public int getBatchSize() {
+                        return genreIds.size();
+                    }
+
+                });
     }
 
     @Override

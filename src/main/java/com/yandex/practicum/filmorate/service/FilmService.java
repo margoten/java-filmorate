@@ -10,6 +10,7 @@ import com.yandex.practicum.filmorate.storage.GenresStorage;
 import com.yandex.practicum.filmorate.storage.MpaStorage;
 import com.yandex.practicum.filmorate.storage.UserStorage;
 import com.yandex.practicum.filmorate.utils.Util;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -23,27 +24,18 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class FilmService {
     private static final LocalDate CINEMA_BIRTHDAY = LocalDate.of(1895, Month.DECEMBER, 28);
     private static final int MAX_FILM_DESCRIPTION_SIZE = 200;
+    private static final int DEFAULT_COUNT_POPULAR_FILMS = 10;
+
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
 
     private final MpaStorage mpaStorage;
     private final GenresStorage genresStorage;
-    private static final int DEFAULT_COUNT_POPULAR_FILMS = 10;
     private int idGenerator = 0;
-
-    @Autowired
-    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
-                       @Qualifier("userDbStorage") UserStorage userStorage,
-                       MpaStorage mpaStorage,
-                       GenresStorage genresStorage) {
-        this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
-        this.mpaStorage = mpaStorage;
-        this.genresStorage = genresStorage;
-    }
 
     public Film createFilm(Film film) {
         if (film == null) {

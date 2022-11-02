@@ -13,7 +13,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
-@Component("mpaDbStorage")
+@Component("mpaStorage")
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class MpaDbStorage implements MpaStorage {
     private final JdbcTemplate jdbcTemplate;

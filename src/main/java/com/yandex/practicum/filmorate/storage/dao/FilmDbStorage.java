@@ -15,8 +15,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-@Component("filmDbStorage")
+@Component("filmStorage")
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 @Slf4j
 public class FilmDbStorage implements FilmStorage {
@@ -38,9 +39,11 @@ public class FilmDbStorage implements FilmStorage {
         String insert = "INSERT INTO film (id, name, description, release_date, duration, mpa) VALUES ( ?, ?, ?, ?,?,?)";
         jdbcTemplate.update(insert, film.getId(), film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), film.getMpa().getId());
         if (film.getGenres() != null) {
-            film.getGenres().forEach(genre -> {
-                genresDbStorage.addFilmGenre(film.getId(), genre.getId());
-            });
+            List<Integer> genreIds = film.getGenres()
+                    .stream()
+                    .map(Genre::getId)
+                    .collect(Collectors.toList());
+            genresDbStorage.addFilmGenres(film.getId(), genreIds);
         }
         return film;
     }
@@ -51,14 +54,16 @@ public class FilmDbStorage implements FilmStorage {
                 "WHERE id = ?";
         jdbcTemplate.update(update, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), film.getMpa().getId(), film.getId());
         List<Genre> existFilmGenres = genresDbStorage.getFilmGenres(film.getId());
-        existFilmGenres.stream()
+        List<Integer> removed = existFilmGenres.stream()
                 .filter(genre -> !film.getGenres().contains(genre))
                 .map(Genre::getId)
-                .forEach(id -> genresDbStorage.removeFilmGenre(film.getId(), id));
-        film.getGenres().stream()
+                .collect(Collectors.toList());
+        genresDbStorage.removeFilmGenres(film.getId(), removed);
+        List<Integer> added = film.getGenres().stream()
                 .filter(genre -> !existFilmGenres.contains(genre))
                 .map(Genre::getId)
-                .forEach(id -> genresDbStorage.addFilmGenre(film.getId(), id));
+                .collect(Collectors.toList());
+        genresDbStorage.addFilmGenres(film.getId(), added);
         return film;
     }
 

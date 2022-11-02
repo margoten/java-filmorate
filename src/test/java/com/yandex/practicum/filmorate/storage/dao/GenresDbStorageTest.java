@@ -67,18 +67,18 @@ class GenresDbStorageTest {
 
     @Test
     void testAddFilmGenre() {
-        assertThatNoException().isThrownBy(() -> genresDbStorage.addFilmGenre(template.getId(), 1));
+        assertThatNoException().isThrownBy(() -> genresDbStorage.addFilmGenres(template.getId(), List.of(1)));
     }
 
     @Test
     void testRemoveFilmGenre() {
-        genresDbStorage.addFilmGenre(template.getId(), 1);
-        assertThatNoException().isThrownBy(() -> genresDbStorage.removeFilmGenre(template.getId(), 1));
+        genresDbStorage.addFilmGenres(template.getId(), List.of(1));
+        assertThatNoException().isThrownBy(() -> genresDbStorage.removeFilmGenres(template.getId(), List.of(1)));
     }
 
     @Test
     void testGetFilmGenres() {
-        genresDbStorage.addFilmGenre(template.getId(), 1);
+        genresDbStorage.addFilmGenres(template.getId(), List.of(1));
         List<Genre> genres = genresDbStorage.getFilmGenres(template.getId());
 
         assertFalse(genres.isEmpty());
