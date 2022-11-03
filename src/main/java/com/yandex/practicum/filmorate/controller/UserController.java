@@ -2,6 +2,7 @@ package com.yandex.practicum.filmorate.controller;
 
 import com.yandex.practicum.filmorate.model.User;
 import com.yandex.practicum.filmorate.service.UserService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -11,14 +12,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/users")
 @Slf4j
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class UserController {
 
     private final UserService userService;
-
-    @Autowired
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
 
     @GetMapping()
     public List<User> getAll() {

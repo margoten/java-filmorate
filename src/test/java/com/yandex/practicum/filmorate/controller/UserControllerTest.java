@@ -3,33 +3,35 @@ package com.yandex.practicum.filmorate.controller;
 import com.yandex.practicum.filmorate.exeption.NotFoundException;
 import com.yandex.practicum.filmorate.exeption.ValidationException;
 import com.yandex.practicum.filmorate.model.User;
-import com.yandex.practicum.filmorate.service.UserService;
-import com.yandex.practicum.filmorate.storage.InMemoryUserStorage;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
+@AutoConfigureTestDatabase
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 class UserControllerTest {
-    private static UserController userController;
+    @Autowired
+    private UserController userController;
     private User template;
-
-    @BeforeAll
-    public static void createController() {
-        userController = new UserController(new UserService(new InMemoryUserStorage()));
-    }
 
     @BeforeEach
     public void createUser() {
         template = new User(0, "sasadas@dfsdfd.com", "login", "name",
-                "2000-10-10");
+                LocalDate.of(2000, 10, 10));
     }
 
     public User createFriend() {
         return new User(0, "friend@dfsdfd.com", "loginFriend", "nameFriend",
-                "2001-10-10");
+                LocalDate.of(2001, 10, 10));
     }
 
     @Test
@@ -49,33 +51,33 @@ class UserControllerTest {
     void shouldExceptionWithIncorrectLogin() {
         template.setLogin("l o g i n");
         ValidationException ex = assertThrows(ValidationException.class, () -> userController.create(template));
-        Assertions.assertEquals("Некоррекстный логин l o g i n.", ex.getMessage());
+        Assertions.assertEquals("Некорректный логин l o g i n.", ex.getMessage());
     }
 
     @Test
     void shouldExceptionWithEmptyEmail() {
         template.setEmail("");
         ValidationException ex = assertThrows(ValidationException.class, () -> userController.create(template));
-        Assertions.assertEquals("Некорретсный адрес электронной почты .", ex.getMessage());
+        Assertions.assertEquals("Некорректный адрес электронной почты .", ex.getMessage());
     }
 
     @Test
     void shouldExceptionWithIncorrectEmail() {
         template.setEmail("4dsadasdas");
         ValidationException ex = assertThrows(ValidationException.class, () -> userController.create(template));
-        Assertions.assertEquals("Некорретсный адрес электронной почты 4dsadasdas.", ex.getMessage());
+        Assertions.assertEquals("Некорректный адрес электронной почты 4dsadasdas.", ex.getMessage());
     }
 
     @Test
     void shouldExceptionWithIncorrectBirthday() {
-        template.setBirthday("2200-10-10");
+        template.setBirthday(LocalDate.of(2200, 10, 10));
         ValidationException ex = assertThrows(ValidationException.class, () -> userController.create(template));
         Assertions.assertEquals("Неверная дата рождения 2200-10-10.", ex.getMessage());
     }
 
     @Test
     void shouldExceptionUpdateWithNonContainsId() {
-        template.setId(2);
+        template.setId(-1);
         NotFoundException ex = assertThrows(NotFoundException.class, () -> userController.update(template));
         Assertions.assertEquals("Пользователь не существует.", ex.getMessage());
     }
@@ -107,9 +109,12 @@ class UserControllerTest {
         User friend = userController.create(createFriend());
         userController.addToFriends(created.getId(), friend.getId());
 
-        assertEquals(friend.getFriends().size(), 1);
-        assertTrue(friend.getFriends().contains(created.getId()));
-        assertTrue(created.getFriends().contains(friend.getId()));
+        User returnedFr = userController.getUser(friend.getId());
+        User returnedUs = userController.getUser(created.getId());
+
+        assertEquals(returnedFr.getFriends().size(), 0);
+        assertFalse(returnedFr.getFriends().contains(created.getId()));
+        assertTrue(returnedUs.getFriends().contains(friend.getId()));
     }
 
     @Test
@@ -145,8 +150,9 @@ class UserControllerTest {
         User friend = userController.create(createFriend());
         userController.addToFriends(created.getId(), friend.getId());
 
-        assertTrue(created.getFriends().contains(friend.getId()));
-        assertEquals(friend.getFriends().size(), 1);
+        User returned = userController.getUser(created.getId());
+        assertTrue(returned.getFriends().contains(friend.getId()));
+        assertEquals(returned.getFriends().size(), 1);
     }
 
     @Test
@@ -165,11 +171,10 @@ class UserControllerTest {
         userController.addToFriends(created.getId(), common.getId());
         userController.addToFriends(friend.getId(), common.getId());
 
-        assertEquals(friend.getFriends().size(), 2);
         assertFalse(userController.getCommonUserFriends(created.getId(), friend.getId()).isEmpty());
 
-        assertTrue(userController.getCommonUserFriends(created.getId(), friend.getId()).contains(common));
-        assertTrue(userController.getCommonUserFriends(created.getId(), common.getId()).contains(friend));
+        assertEquals(userController.getCommonUserFriends(created.getId(), friend.getId()).size(), 1);
+        assertEquals(userController.getCommonUserFriends(created.getId(), common.getId()).size(), 0);
 
     }
 

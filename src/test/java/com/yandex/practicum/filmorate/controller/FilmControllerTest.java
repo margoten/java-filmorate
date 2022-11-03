@@ -3,40 +3,40 @@ package com.yandex.practicum.filmorate.controller;
 import com.yandex.practicum.filmorate.exeption.NotFoundException;
 import com.yandex.practicum.filmorate.exeption.ValidationException;
 import com.yandex.practicum.filmorate.model.Film;
+import com.yandex.practicum.filmorate.model.Mpa;
 import com.yandex.practicum.filmorate.model.User;
-import com.yandex.practicum.filmorate.service.FilmService;
 import com.yandex.practicum.filmorate.service.UserService;
-import com.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
-import com.yandex.practicum.filmorate.storage.InMemoryUserStorage;
-import com.yandex.practicum.filmorate.storage.UserStorage;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.HashSet;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
+@AutoConfigureTestDatabase
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 class FilmControllerTest {
-    private static FilmController filmController;
+    @Autowired
+    private FilmController filmController;
     private Film template;
-    private static User user;
+    private User user;
 
-    @BeforeAll
-    public static void createController() {
-        UserStorage userStorage = new InMemoryUserStorage();
-        UserService userService = new UserService(userStorage);
-        user = userService.createUser(new User(0, "sasadas@dfsdfd.com", "login", "name",
-                "2000-10-10"));
-        filmController = new FilmController(new FilmService(new InMemoryFilmStorage(), userStorage));
-    }
+    @Autowired
+    private UserService userService;
 
     @BeforeEach
     public void createFilm() {
+        user = userService.createUser(new User(0, "sasadas@dfsdfd.com", "login", "name",
+                LocalDate.of(2000, 10, 10)));
         template = new Film(0, "name", "descr",
-                "2000-10-10", 10);
+                LocalDate.of(2000, 10, 10), 10, new Mpa(1, "G"));
     }
 
     @Test
@@ -71,7 +71,7 @@ class FilmControllerTest {
 
     @Test
     void shouldExceptionWithIncorrectReleaseDay() {
-        template.setReleaseDate("1600-10-10");
+        template.setReleaseDate(LocalDate.of(1600,10,10));
         ValidationException ex = assertThrows(ValidationException.class, () -> filmController.create(template));
         Assertions.assertEquals("Некорректная дата выхода фильма", ex.getMessage());
 
@@ -79,7 +79,7 @@ class FilmControllerTest {
 
     @Test
     void shouldExceptionUpdateWithNonContainsId() {
-        template.setId(4);
+        template.setId(-1);
         NotFoundException ex = assertThrows(NotFoundException.class, () -> filmController.update(template));
         Assertions.assertEquals("Фильм не существует.", ex.getMessage());
 
@@ -90,15 +90,17 @@ class FilmControllerTest {
     void shouldCorrectLikeFilm() {
         Film film = filmController.create(template);
         filmController.likeFilm(film.getId(), user.getId());
-        assertEquals(film.getLikes().size(), 1);
-        assertTrue(film.getLikes().contains(user.getId()));
+        var returned = filmController.getFilm(film.getId());
+        assertEquals(returned.getLikes().size(), 1);
+        assertTrue(returned.getLikes().contains(user.getId()));
     }
 
     @Test
     void shouldEmptyLikeFilm() {
         Film film = filmController.create(template);
-        assertNotNull(film.getLikes());
-        assertEquals(film.getLikes().size(), 0);
+        var returned = filmController.getFilm(film.getId());
+        assertNotNull(returned.getLikes());
+        assertEquals(returned.getLikes().size(), 0);
     }
 
     @Test

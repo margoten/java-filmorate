@@ -5,26 +5,24 @@ import com.yandex.practicum.filmorate.exeption.ValidationException;
 import com.yandex.practicum.filmorate.model.User;
 import com.yandex.practicum.filmorate.storage.UserStorage;
 import com.yandex.practicum.filmorate.utils.Util;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class UserService {
 
     private final UserStorage userStorage;
     private int idGenerator = 0;
-
-    @Autowired
-    public UserService(UserStorage userStorage) {
-        this.userStorage = userStorage;
-    }
 
     public User createUser(User user) {
         if (user == null) {
@@ -40,20 +38,18 @@ public class UserService {
         if (user == null) {
             throw new ValidationException("Пользователь не может быть обновлен.");
         }
-        if (userStorage.get(user.getId()) == null) {
-            log.warn("Пользовател с id {} не существует.", user.getId());
+        if (userStorage.getUserById(user.getId()).isEmpty()) {
+            log.warn("Пользователь с id {} не существует.", user.getId());
             throw new NotFoundException("Пользователь не существует.");
         }
         validationUser(user);
-        return userStorage.update(user);
+        return userStorage.update(user).get();
     }
 
     public User getUser(Integer userId) {
-        User user = userStorage.get(userId);
-        if (user == null) {
+        return userStorage.getUserById(userId).orElseThrow(() -> {
             throw new NotFoundException("Пользователя с id = " + userId + " не существует.");
-        }
-        return user;
+        });
     }
 
     public List<User> getUsers() {
@@ -63,31 +59,31 @@ public class UserService {
     public void addToFriends(int targetUserId, int friendId) {
         User targetUser = getUser(targetUserId);
         User friend = getUser(friendId);
-        targetUser.getFriends().add(friendId);
-        friend.getFriends().add(targetUserId);
+        userStorage.addToFriend(targetUser, friend);
     }
 
     public void removeFromFriends(int targetUserId, int friendId) {
         User targetUser = getUser(targetUserId);
         User friend = getUser(friendId);
-        targetUser.getFriends().remove(friendId);
-        friend.getFriends().remove(targetUserId);
+        userStorage.removeFromFriend(targetUser, friend);
     }
 
     public List<User> getFriends(int userId) {
         User user = getUser(userId);
         return user.getFriends().stream()
-                .map(userStorage::get)
-                .filter(Objects::nonNull)
+                .map(userStorage::getUserById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
     }
 
     public List<User> getCommonFriends(int targetUserId, int otherUserId) {
         User targetUser = getUser(targetUserId);
         User otherUser = getUser(otherUserId);
-        return targetUser.getFriends().stream().filter(id -> otherUser.getFriends().contains(id))
-                .map(userStorage::get)
-                .filter(Objects::nonNull)
+        return   targetUser.getFriends().stream().filter(id -> otherUser.getFriends().contains(id))
+                .map(userStorage::getUserById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
     }
 
@@ -98,18 +94,18 @@ public class UserService {
         }
 
         if (user.getLogin().contains(" ")) {
-            log.warn("Некоррекстный логин {}.", user.getLogin());
-            throw new ValidationException("Некоррекстный логин " + user.getLogin() + ".");
+            log.warn("Некорректный логин {}.", user.getLogin());
+            throw new ValidationException("Некорректный логин " + user.getLogin() + ".");
 
         }
 
         if (user.getEmail().isBlank() || !user.getEmail().contains("@")) {
-            log.warn("Некорретсный адрес электронной почты {}.", user.getEmail());
-            throw new ValidationException("Некорретсный адрес электронной почты " + user.getEmail() + ".");
+            log.warn("Некорректный адрес электронной почты {}.", user.getEmail());
+            throw new ValidationException("Некорректный адрес электронной почты " + user.getEmail() + ".");
 
         }
 
-        if (LocalDate.parse(user.getBirthday(), Util.DATE_FORMAT).isAfter(LocalDate.now())) {
+        if (user.getBirthday().isAfter(LocalDate.now())) {
             log.warn("Неверная дата рождения {}.", user.getBirthday());
             throw new ValidationException("Неверная дата рождения " + user.getBirthday() + ".");
 
