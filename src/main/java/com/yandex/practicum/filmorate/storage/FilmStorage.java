@@ -12,6 +12,7 @@ public interface FilmStorage {
 
     Film update(Film film);
 
+    List<Film>  search(String query, Boolean director, Boolean title);
     Optional<Film> get(int filmId);
 
     List<Film> getMostPopularFilms(int count);

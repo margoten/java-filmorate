@@ -35,6 +35,11 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
+    public List<Film> search(String query, Boolean director, Boolean title) {
+        return null;
+    }
+
+    @Override
     public Optional<Film> get(int filmId) {
         return Optional.of(films.get(filmId));
     }

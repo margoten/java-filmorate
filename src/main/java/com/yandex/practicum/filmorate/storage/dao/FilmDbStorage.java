@@ -25,6 +25,11 @@ public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
     private final GenresDbStorage genresDbStorage;
 
+    private static final String FILMS_TABLE = "\"FILM\"";
+    private static final String MPA_TABLE = "\"MPA\"";
+    private static final String FILM_GENRES_TABLE = "\"FILM_GENRE\"";
+    private static final String GENRES_TABLE = "\"GENRE\"";
+    private static final String FILM_LIKES_TABLE = "\"FILM_LIKES\"";
 
     @Override
     public List<Film> getFilms() {
@@ -65,6 +70,32 @@ public class FilmDbStorage implements FilmStorage {
                 .collect(Collectors.toList());
         genresDbStorage.addFilmGenres(film.getId(), added);
         return film;
+    }
+
+    @Override
+    public List<Film> search(String query, Boolean director, Boolean title) {
+        //TODO Change query according to database structure after new "directors" feather would be implemented
+        //At first stage it will look for films by title
+        director = false; //temporary solution
+
+        query = "%" + query + "%";
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT f.*, m.id AS mpa_id, m.name AS mpa_name ");
+        sb.append("FROM " + FILMS_TABLE + " AS f ");
+        sb.append("INNER JOIN " + MPA_TABLE + " AS m ON f.mpa = m.id");
+
+        sb.append(director && title ? "\n WHERE LOWER(f.name) LIKE (?) \n OR LOWER(f.director) LIKE LOWER(?);" :
+                title ? "\n WHERE LOWER(f.name) LIKE LOWER(?);" :
+                        "\n WHERE LOWER(f.director) LIKE LOWER(?);");
+
+        List<Film> films = jdbcTemplate.query(sb.toString(), (rs, rowNum) -> makeFilm(rs), query);
+
+        films.forEach(film -> {
+            film.getGenres().addAll(genresDbStorage.getFilmGenres(film.getId()));
+            film.getLikes().addAll(getUserLikes(film.getId()));
+        });
+        return films;
     }
 
     @Override
