@@ -143,4 +143,9 @@ public class FilmDbStorage implements FilmStorage {
         return film;
 
     }
+
+    @Override
+    public void removeFilm(int filmId) {
+        jdbcTemplate.update("DELETE FROM film WHERE ID=?", filmId);
+    }
 }

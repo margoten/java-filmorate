@@ -40,4 +40,9 @@ public class InMemoryUserStorage implements UserStorage {
     public void removeFromFriend(User targetUser, User friend) {
         targetUser.getFriends().remove(friend.getId());
     }
+
+    @Override
+    public void deleteUser(int id) {
+
+    }
 }

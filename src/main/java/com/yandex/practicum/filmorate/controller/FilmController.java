@@ -54,4 +54,8 @@ public class FilmController {
         return filmService.getMostPopularFilms(count);
     }
 
+    @DeleteMapping("/{id}")
+    public void deleteFilm(@PathVariable int id) {
+        filmService.deleteFilm(id);
+    }
 }
