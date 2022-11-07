@@ -4,11 +4,9 @@ import com.yandex.practicum.filmorate.exeption.NotFoundException;
 import com.yandex.practicum.filmorate.exeption.ValidationException;
 import com.yandex.practicum.filmorate.model.User;
 import com.yandex.practicum.filmorate.storage.UserStorage;
-import com.yandex.practicum.filmorate.utils.Util;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -80,7 +78,7 @@ public class UserService {
     public List<User> getCommonFriends(int targetUserId, int otherUserId) {
         User targetUser = getUser(targetUserId);
         User otherUser = getUser(otherUserId);
-        return   targetUser.getFriends().stream().filter(id -> otherUser.getFriends().contains(id))
+        return targetUser.getFriends().stream().filter(id -> otherUser.getFriends().contains(id))
                 .map(userStorage::getUserById)
                 .filter(Optional::isPresent)
                 .map(Optional::get)

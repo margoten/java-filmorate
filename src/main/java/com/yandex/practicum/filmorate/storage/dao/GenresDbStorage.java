@@ -5,10 +5,8 @@ import com.yandex.practicum.filmorate.storage.GenresStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.relational.core.sql.In;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 
@@ -79,6 +77,7 @@ public class GenresDbStorage implements GenresStorage {
 //        String insert = "INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)";
 //        jdbcTemplate.update(insert, filmId, genreId);
     }
+
     @Override
     public void removeFilmGenres(int filmId, List<Integer> genreIds) {
         jdbcTemplate.batchUpdate(

@@ -13,13 +13,13 @@ import com.yandex.practicum.filmorate.utils.Util;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @Service
@@ -116,6 +116,10 @@ public class FilmService {
         return filmStorage.getMostPopularFilms(count);
     }
 
+    public TreeSet<Film> getCommonFilms(int userId, int friendId) {
+        return filmStorage.getCommonFilms(userId, friendId);
+    }
+
     private void validationFilm(Film film) {
         if (film.getName().isBlank()) {
             log.warn("Название фильма пустое.");
@@ -163,4 +167,6 @@ public class FilmService {
     private int generatedId() {
         return ++idGenerator;
     }
+
+
 }

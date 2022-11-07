@@ -13,8 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component("filmStorage")
@@ -119,6 +118,20 @@ public class FilmDbStorage implements FilmStorage {
     public void unlikeFilm(Film film, int userId) {
         String delete = "DELETE FROM film_likes WHERE user_id = ? AND film_id = ?";
         jdbcTemplate.update(delete, userId, film.getId());
+    }
+
+    @Override
+    public TreeSet<Film> getCommonFilms(int userId, int friendId) {
+        Set<Integer> usersId = new HashSet<>(getFilmsIdByUserLikes(userId));
+        Set<Integer> friendsId = new HashSet<>(getFilmsIdByUserLikes(userId));
+        usersId.retainAll(friendsId);
+        String select = "SELECT * FROM film WHERE film_id IN (?)";
+        return new TreeSet<>(jdbcTemplate.query(select, (rs, rowNum) -> makeFilm(rs), usersId));
+    }
+
+    private List<Integer> getFilmsIdByUserLikes(int userId) {
+        String select = "SELECT film_id FROM film_likes WHERE user_id = ?";
+        return jdbcTemplate.query(select, (rs, rowNum) -> rs.getInt("film_id"), userId);
     }
 
     private List<Integer> getUserLikes(int filmId) {

@@ -4,10 +4,7 @@ import com.yandex.practicum.filmorate.model.Film;
 import com.yandex.practicum.filmorate.model.comparator.FilmsComparator;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -47,6 +44,11 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public void unlikeFilm(Film film, int userId) {
         film.getLikes().remove(userId);
+    }
+
+    @Override
+    public TreeSet<Film> getCommonFilms(int userId, int friendId) {
+        return null;
     }
 
     @Override
